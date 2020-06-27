@@ -67,6 +67,13 @@ void FileSystem::setBlockBitmap(unsigned int start, unsigned int count) {
 	fout.write(blockBitmap + start, blockNum);
 }
 
+void FileSystem::getBlockBitmap(char *blockBitmap) {
+	if (!fin.is_open())
+		return;
+	fin.seekg(offset.blockBitmap, ios::beg);
+	fin.read(blockBitmap, blockBitmapSize);
+}
+
 void FileSystem::setInodeBitmap(unsigned int start, unsigned int count) {
 	if (!fout.is_open())
 	{
@@ -77,3 +84,83 @@ void FileSystem::setInodeBitmap(unsigned int start, unsigned int count) {
 	fout.write(inodeBitmap + start, blockNum);
 }
 
+void FileSystem::getInodeBitmap(char *inodeBitmap) {
+	if (!fin.is_open())
+		return;
+	fin.seekg(offset.inode, ios::beg);
+	fin.read(inodeBitmap, inodeBitmapSize);
+}
+
+void FileSystem::setInode(Inode inode) {
+	if (!fout.is_open())
+		return;
+	fout.seekp(offset.inode + inode.id * inodeSize, ios::beg);
+	fout.write((char*)&inode, inodeSize);
+}
+
+void FileSystem::getInode(Inode &inode, I_INDEX id) {
+	if (!fin.is_open())
+		return;
+	fin.seekg(offset.inode + id * inodeSize, ios::beg);
+	fin.read((char*)&inode, inodeSize);
+}
+
+// 释放Inode节点
+void FileSystem::releaseInode(I_INDEX id) {
+	if (!fout.is_open())
+		return;
+	fout.seekp(offset.inode + id * inodeSize, ios::beg);
+	fout.write(0, inodeSize);
+}
+
+
+// item 地址或者文件项
+unsigned int FileSystem::getItem(I_INDEX blockId, unsigned int index) {
+	unsigned int value;
+	if (!fin.is_open())
+		return;
+	fin.seekg(offset.block + blockId * blockSize + index * itemSize, ios::beg);
+	fin.read((char*)&value, itemSize);
+	return value;
+}
+
+void FileSystem::releaseItem(I_INDEX blockId, unsigned int index) {
+	if (!fout.is_open())
+		return;
+	fout.seekp(offset.block + blockId * blockSize + index * itemSize, ios::beg);
+	fout.write(0, itemSize);
+}
+
+void FileSystem::setItem(I_INDEX blockId, unsigned int index, unsigned int value) {
+	if (!fout.is_open())
+		return;
+	fout.seekp(offset.block + blockId * blockSize + index * itemSize, ios::beg);
+	fout.write((char*)&value, itemSize);
+}
+
+//
+
+
+//////////////FcbLink
+void FileSystem::releaseFcbLink(FcbLink &fcbLink) {
+	FcbLink tlink = fcbLink;
+	FcbLink temp;
+	while (tlink != NULL)
+	{
+		temp =  tlink->next;
+		delete tlink;
+		tlink = temp;
+	}
+	fcbLink = NULL;
+}
+
+// 使用Inode构造FcbLink节点
+void FileSystem::getFcbLink_ByInode(FcbLink fcbLink, Inode inode) {
+	if (fcbLink == NULL)
+		return;
+	fcbLink->fcb.id = inode.id;
+	strcpy(fcbLink->fcb.filename, inode.filename);
+	fcbLink->fcb.filetype = inode.filetype;
+	fcbLink->fcb.blockId = inode.blockId;
+	fcbLink->next = NULL;
+}

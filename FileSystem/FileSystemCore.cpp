@@ -29,12 +29,14 @@ curLink(NULL)
 
 void FileSystem::init() {
 	//初始化文件流，打开文件
-	fin.open(systemName, ios::in | ios::binary);
+
 	if (fin.is_open()) {	// 已存在系统，文件打开成功
 		fout.open(systemName, ios::out | ios::binary);	//初始化输出流
 		cout << "Load the " << systemName << " Success!" << endl;
 		// 登录判断
 		login();
+		// 登录之后加载
+		load_afterLogin();
 	}
 	else {//不存在该系统，创建系统
 		createSystem();
@@ -43,7 +45,14 @@ void FileSystem::init() {
 		createUser();
 		// 登录判断
 		login();
+		// 登录之后的初始化
+		init_afterLogin();
 	}
+
+	cout << "Enter the " << systemName << " FileSystem bash" << endl;
+}
+
+void FileSystem::init_afterLogin() {
 
 	// 初始化 superBlock
 	this->superBlock.blockSize = blockSize;
@@ -81,11 +90,41 @@ void FileSystem::init() {
 	for (i = 0; i < 12; ++i)
 		this->curInode.addr[i] = 0;
 	this->curInode.blockId = 0;
+	setInode(this->curInode);
 
+	// 刷新缓冲区
+	fout.flush();
 
-
+	// 构建目录的信息链
+	// 其实不需要构建
+	curPath = "/";	// 设置当前路径
 
 }
+
+
+void FileSystem::load_afterLogin() {
+	fin.seekg(0, ios::beg);
+	getUser(this->user);
+	getSuperBlock(this->superBlock);
+	getBlockBitmap(this->blockBitmap);
+	getInodeBitmap(this->inodeBitmap);
+
+	// 获取当前的Inode节点
+	getInode(this->curInode, 0);
+	// 获取当前的目录信息,构建目录的信息链
+
+	// 设置当前目录
+	curPath = "/";
+}
+
+
+
+
+void FileSystem::buildFcbLink() {
+
+}
+
+
 
 // 不存在文件系统时创建文件系统
 void FileSystem::createSystem()
@@ -119,7 +158,8 @@ FileSystem::~FileSystem()
 		delete inodeBitmap;
 		inodeBitmap = NULL;
 	}
-	fclose(fp);
+	fin.close();
+	fout.close();
 	cout << "Exit File System" << endl;
 }
 

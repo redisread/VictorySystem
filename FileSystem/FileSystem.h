@@ -158,11 +158,11 @@ typedef struct
 typedef struct
 {
 	unsigned int user;
-	unsigned int superBlock;  //superBlock偏移
-	unsigned int blockBitmap; //blockBitmap偏移
-	unsigned int inodeBitmap; //inodeBitmap偏移
-	unsigned int inode;       //i节点区偏移
-	unsigned int block;  // 数据区偏移
+	unsigned int superBlock;	 //superBlock偏移
+	unsigned int blockBitmap;	 //blockBitmap偏移
+	unsigned int inodeBitmap;	 //inodeBitmap偏移
+	unsigned int inode;			//i节点区偏移
+	unsigned int block;			// 数据区偏移
 } Offset;
 
 // 实现文件系统
@@ -171,15 +171,19 @@ class FileSystem
 public:
 	FileSystem();	//构造函数，数据初始化
 	void init();	//文件系统相关操作初始化
+	void init_afterLogin();	//第一次登录之后的初始化
+	void load_afterLogin();	//再次加载文件系统
 	virtual ~FileSystem();	//析构函数
 
 	// 系统初始化相关函数
 	void createSystem(); // 创建文件系统，假如不存在
 	void loadSystem();   // 假如文件系统存在，直接加载
+	void doCommand();	// 接受用户命令并且执行
 
 	// 用户操作
 	void createUser();                          // 创建用户
 	void login();								// 登录操作
+	void logout();								// 登出操作
 
 	// 设置、获取数据
 	void setUser(User user); // 用户数据	
@@ -189,12 +193,31 @@ public:
 
 
 	void setBlockBitmap(unsigned int start, unsigned int count);
+	void getBlockBitmap(char *blockBitmap);
 	void setInodeBitmap(unsigned int start, unsigned int count);
+	void getInodeBitmap(char *inodeBitmap);
+
+	void setInode(Inode inode);
+	void getInode(Inode &inode, I_INDEX id);
+	void releaseInode(I_INDEX id);
+
+	// 地址项
+	unsigned int getItem(I_INDEX blockId, unsigned int index);
+	void releaseItem(I_INDEX blockId, unsigned int index);
+	void setItem(I_INDEX blockId, unsigned int index, unsigned int value);
+	
+
+	// FcbLink
+	void buildFcbLink();
+	void releaseFcbLink(FcbLink &fcbLink);	// 传入指针引用
+	void getFcbLink_ByInode(FcbLink fcbLink, Inode inode);
+
+	
 
 	// 文件操作命令
-	void createFile(); // 创建文件
-	void readFile();   // 读取文件
-	void writeFile();  // 写文件
+	void createFile();
+	void readFile();
+	void writeFile();
 
 	// 其他命令
 	void ls();
@@ -204,6 +227,8 @@ public:
 	void cd();
 	void cp();
 	void help();
+	void systemInfo();
+	void clear();
 
 	// 获取内部数据接口
 	string getSystemName() { return SystemName; }
@@ -220,8 +245,8 @@ private:
 
 	const int blockSize;        //文件块大小
 	const int blockNum;         //文件块数量
-	char *blockBitmap; //文件块使用图 (区块对照表)
-	char *inodeBitmap; //i节点使用图 (inode 对照表)
+	char *blockBitmap;			//文件块使用图 (区块对照表)
+	char *inodeBitmap;			//i节点使用图 (inode 对照表)
 
 	//大小
 	unsigned int systemSize;        // 系统大小
@@ -231,7 +256,7 @@ private:
 	unsigned short inodeBitmapSize; // i节点位图大小
 	unsigned short inodeSize;       // i节点大小
 	unsigned short fcbSize;         // fcb大小
-	unsigned short itemSize;
+	unsigned short itemSize;		// 4B
 
 	//各种偏移
 	Offset offset;

@@ -27,7 +27,16 @@ void FileSystem::help()
     exit    ---  exit this system\n");
 }
 
+void FileSystem::clear() {
+	system("clear");
+}
 
+void FileSystem::systemInfo() {
+	printf("Sum of block number:%d\n", superBlock.blockNum);
+	printf("Each block size:%d\n", superBlock.blockSize);
+	printf("Free of block number:%d\n", superBlock.blockFree);
+	printf("Sum of inode number:%d\n", superBlock.inodeNum);
+}
 void FileSystem::cd() {
 	;
 }

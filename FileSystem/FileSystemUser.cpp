@@ -29,7 +29,7 @@ void FileSystem::login()
 	cout << "password: ";
 	cin >> password;
 
-	if (strcmp(username, this->user.username) == 0)
+	if (strcmp(username, this->user.username) == 0 && strcmp(password, this->user.password) == 0);
 	{
 		cout << "login successful!" << endl;
 		return;
@@ -39,3 +39,12 @@ void FileSystem::login()
 	this->login();
 }
 
+
+void FileSystem::logout() {
+	// 保存数据
+
+	// 重新进入文件系统
+	login();
+	init_afterLogin();
+
+}
